@@ -1,0 +1,450 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>sign-generator</title>
+</head>
+<link rel="stylesheet" href="http://testsign2.cn-sh2.ufileos.com/datepicker.css"/>
+<style>
+    *{
+        margin:0;
+        padding:0;
+    }
+    a{
+        /*text-decoration: none;*/
+        color:#000;
+        margin-left: 20px;;
+    }
+    .generator{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items:center;
+        margin-bottom: 100px;
+    }
+    .generator ul{
+        display: flex;
+        width: 785px;
+        border-bottom: 2px solid #4683e6;
+        margin-top: 40px;
+    }
+    .generator ul li{
+        list-style: none;
+        background-color: #fff;
+        border: 1px solid #4683e6;
+        color: #4683e6;
+        padding:10px 20px;
+        cursor: pointer;
+    }
+    .generator ul li:first-child{
+        border-right: 1px solid #ffffff;
+    }
+    .generator ul li.active{
+        background-color: #4683e6;
+        color: #fff;
+    }
+    .form .form_line{
+        width: 785px;
+        height:50px;
+        line-height: 50px;
+    }
+    .form .form_line input{
+        width: 510px;
+        height:30px;
+        padding-left:5px;
+        border:1px solid #ccc;
+        border-radius: 5px;
+    }
+    .form .form_line .item{
+        display: inline-block;
+        width: 110px;
+        font-size: 18px;
+    }
+    .form .form_line .error{
+        display: none;
+        color: red;
+        font-size: 14px;
+    }
+    .form .form_line.is-required .item:after {
+        content: "*";
+        color: #ff4949;
+        margin-left: 5px;
+    }
+    .form button{
+        padding: 5px 10px;
+        font-size: 16px;
+        background-color: #4683e6;
+        border:1px solid #4683e6;
+        border-radius: 5px;
+        color: #fff;
+        margin:20px 0;
+    }
+    .form button:hover{
+        background-color: #337ab7;
+    }
+    .form textarea{
+        width:783px;
+        height: 130px;
+        font-size: 20px;
+    }
+    .form .step{
+        background-color: #4683e6;
+    }
+    .form .step h3{
+        margin:0;
+        margin-top: 20px;
+        line-height: 50px;
+        color: #fff;
+        padding-left: 10px;
+    }
+
+</style>
+<body>
+<div class="generator">
+    <h1>签名生成器</h1>
+    <ul class="generator_ul">
+        <li id="generator_tab_manage" class="generator_tab active">文件管理签名</li>
+        <li id="generator_tab_download" class="generator_tab">文件下载签名</li>
+    </ul>
+    <div class="form form_file_manage">
+        <div class="form_line is-required">
+            <span class="item">Public_key</span>
+            <input id="public_key" class="public_key" maxlength="50" placeholder="请输入你的公钥，如”TOKEN_8d7547a1-8r77-4b12-9e8c-e1g69bbbc62a“"/>
+            <span class="error">公钥不能为空</span>
+        </div>
+        <div class="form_line is-required">
+            <span class="item">Private_key</span>
+            <input id="private_key" class="private_key" maxlength="50" placeholder="请输入你的私钥，如”a34403d8-2dfc-4a65-abc3-67beb6d7855f“"/>
+            <span class="error">私钥不能为空</span>
+        </div>
+        <div class="form_line is-required">
+            <span class="item">Method</span>
+            <input id="method" class="method" maxlength="10" placeholder="HTTP请求的Method，只支持大写，如：“PUT”"/>
+            <span class="error">Method不符合规范</span>
+        </div>
+        <div class="form_line is-required">
+            <span class="item">Key</span>
+            <input id="key" class="key" maxlength="50" placeholder="请输入你要上传的文件名称"/>
+            <span class="error">文件名称不能为空</span>
+        </div>
+        <div class="form_line is-required">
+            <span class="item">Bucket</span>
+            <input id="bucket" class="bucket" maxlength="63" placeholder="请输入你的空间名称"/>
+            <span class="error">空间名称不符合规范</span>
+        </div>
+        <div class="form_line">
+            <span class="item">MD5</span>
+            <input id="md5" class="md5" maxlength="50" placeholder="文件的MD5值，如“7cb3305e4b85ba2ba904cecff5601”"/>
+        </div>
+        <div class="form_line">
+            <span class="item">Mime_type</span>
+            <input id="mime_type" class="mime_type" maxlength="50" placeholder="文件的类型，如“image/jpeg”"/>
+        </div>
+        <div class="form_line">
+            <span class="item">Date</span>
+            <input id="date" class="date" maxlength="20" placeholder="时间，如“20180808121259”"/>
+        </div>
+        <div class="form_line is-required" style="display: none">
+            <span class="item">Expires</span>
+            <input id="expires" class="expires" maxlength="10" readonly placeholder="该URL的超时时间"/>
+            <span class="error">超时时间不能为空</span>
+        </div>
+        <div class="form_line is-required" style="display: none">
+            <span class="item">Domain</span>
+            <input id="domain" class="domain" maxlength="50" placeholder="存储空间域名或者用户自定义域名"/>
+            <span class="error">域名不符合规范</span>
+        </div>
+        <div>
+            <button id="signBtn">生成签名</button>
+            <button id="processBtn">生成签名过程</button>
+            <a target="_blank" href="https://docs.ucloud.cn/storage_cdn/ufile/api">签名文档说明</a>
+        </div>
+        <div class="step" style="display: none">
+            <h3>1、组装好必要的请求参数</h3>
+            <textarea id="step1" disabled style="resize:none" ></textarea>
+        </div>
+        <div class="step" style="display: none">
+            <h3>2、进行HMAC SHA1 算法计算，并输出十六进制值</h3>
+            <textarea id="step2" disabled style="resize:none" ></textarea>
+        </div>
+        <div class="step" style="display: none">
+            <h3>3、对刚刚的 Sum 进行 Base64 编码处理</h3>
+            <textarea id="step3" disabled style="resize:none" ></textarea>
+        </div>
+        <div class="step">
+            <h3>4、组装好 Public Key，生成最终放入到 HTTP Authorization 里面的签名</h3>
+            <textarea id="step4" disabled style="resize:none" ></textarea>
+        </div>
+        <div class="step" style="display: none">
+            <h3>4、组装Public Key，私有空间文件下载地址构造</h3>
+            <textarea id="download_step4" disabled style="resize:none" ></textarea>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" src="http://testsign2.cn-sh2.ufileos.com/bundle.js"></script>
+<script type="text/javascript">
+    window.onload = function(){
+        Calendar.create({
+            classN: 'expires',
+            callBack: function(bindElem, dateObj) {
+                bindElem.value = new Date(dateObj.year,dateObj.month-1,dateObj.date).getTime()/1000;
+                if(document.createEvent) {
+                    var evObj = document.createEvent('MouseEvents');
+                    evObj.initEvent( 'blur', true, false);
+                    expires.dispatchEvent(evObj);
+                } else if( document.createEventObject) {
+                    expires.fireEvent('onblur');
+                }
+            }
+        })
+        var parent = document.querySelector('.generator_ul');
+        var currentTab = 'manage';
+        var hasError = [];
+
+        var publicKey = document.getElementById('public_key');
+        var privateKey = document.getElementById('private_key');
+        var method = document.getElementById('method');
+        var key = document.getElementById('key');
+        var bucket = document.getElementById('bucket');
+        var md5 = document.getElementById('md5');
+        var mimeType = document.getElementById('mime_type');
+        var date = document.getElementById('date');
+        var expires = document.getElementById('expires');
+        var domain = document.getElementById('domain');
+        var signBtn = document.getElementById('signBtn');
+        var processBtn = document.getElementById('processBtn');
+        var signArea4 = document.getElementById('step4');
+        var downloadArea = document.getElementById('download_step4');
+        parent.addEventListener('click',function(ev){
+            var target = ev.target || ev.srcElement;
+            target.parentNode.children[0].style.backgroundColor = '#fff';
+            target.parentNode.children[0].style.color = '#4683c6';
+            target.parentNode.children[1].style.backgroundColor = '#fff';
+            target.parentNode.children[1].style.color = '#4683c6';
+            target.style.backgroundColor = '#4683c6';
+            target.style.color = '#fff';
+            if(target.id === 'generator_tab_manage'){
+                expires.parentNode.style.display = 'none';
+                domain.parentNode.style.display = 'none';
+                date.parentNode.style.display = 'block';
+                currentTab = 'manage';
+                signArea4.parentNode.style.display = 'block';
+                md5.parentNode.style.display = 'block';
+                mimeType.parentNode.style.display = 'block';
+                downloadArea.parentNode.style.display = 'none';
+                method.value = '';
+                method.disabled = false;
+            }else if(target.id === 'generator_tab_download'){
+                date.parentNode.style.display = 'none';
+                expires.parentNode.style.display = 'block';
+                domain.parentNode.style.display = 'block';
+                currentTab = 'download';
+                downloadArea.parentNode.style.display = 'block';
+                signArea4.parentNode.style.display = 'none';
+                md5.parentNode.style.display = 'none';
+                mimeType.parentNode.style.display = 'none';
+                method.value = 'GET';
+                method.disabled = 'disabled';
+                method.style.borderColor = '#ccc';
+                method.nextSibling.nextSibling.style.display = 'none';
+                hasError.remove('method_error');
+            }
+        });
+        publicKey.addEventListener('blur', function(){
+            publicKey.style.borderColor = '#ccc';
+            publicKey.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('public_error');
+            if(!this.value){
+                publicKey.style.borderColor = 'red';
+                publicKey.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('public_error');
+            }
+        });
+        privateKey.addEventListener('blur', function(){
+            privateKey.style.borderColor = '#ccc';
+            privateKey.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('private_error');
+            if(!this.value){
+                privateKey.style.borderColor = 'red';
+                privateKey.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('private_error');
+            }
+        });
+        method.addEventListener('blur', function(){
+            method.style.borderColor = '#ccc';
+            method.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('method_error');
+            if(!(/^[A-Z]+$/.test(this.value))){
+                method.style.borderColor = 'red';
+                method.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('method_error');
+            }
+        });
+        key.addEventListener('blur', function(){
+            key.style.borderColor = '#ccc';
+            key.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('key_error');
+            if(!this.value){
+                key.style.borderColor = 'red';
+                key.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('key_error');
+            }
+        });
+        bucket.addEventListener('blur', function(){
+            bucket.style.borderColor = '#ccc';
+            bucket.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('bucket_error');
+            if(!(/^[a-z0-9]{1}([a-z0-9]|[-]){2,62}$/.test(this.value))){
+                bucket.style.borderColor = 'red';
+                bucket.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('bucket_error');
+            }
+        });
+        expires.addEventListener('blur', function(){
+            var self = this;
+            expires.style.borderColor = '#ccc';
+            expires.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('expires_error');
+            if(!self.value){
+                expires.style.borderColor = 'red';
+                expires.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('expires_error');
+            }
+        });
+        domain.addEventListener('blur', function(){
+            domain.style.borderColor = '#ccc';
+            domain.nextSibling.nextSibling.style.display = 'none';
+            hasError.remove('domain_error');
+            if(!(/[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+.?/.test(this.value))){
+                domain.style.borderColor = 'red';
+                domain.nextSibling.nextSibling.style.display = 'inline-block';
+                hasError.push('domain_error');
+            }
+        });
+        Array.prototype.remove = function(val) {
+            var index = this.indexOf(val);
+            if (index > -1) {
+                this.splice(index, 1);
+            }
+        };
+
+        function sign(showProcess){
+            var publicKeyValue = publicKey.value;
+            var privateKeyValue = privateKey.value;
+            var methodValue = method.value;
+            var keyValue = key.value;
+            var bucketValue = bucket.value;
+            var md5Value = md5.value;
+            var mimeTypeValue = mimeType.value;
+            var dateValue = date.value;
+            var expiresValue = expires.value;
+            var domainValue = domain.value;
+            if(currentTab === 'manage'){
+                /*if(!(publicKeyValue.trim() && privateKeyValue.trim() && methodValue.trim() && keyValue.trim() && bucketValue.trim())){
+                    alert('请填入必填项');
+                    return;
+                }*/
+                if(document.createEvent) {
+                    var evObj = document.createEvent('MouseEvents');
+                    evObj.initEvent( 'blur', true, false);
+                    publicKey.dispatchEvent(evObj);
+                    privateKey.dispatchEvent(evObj);
+                    method.dispatchEvent(evObj);
+                    key.dispatchEvent(evObj);
+                    bucket.dispatchEvent(evObj);
+                } else if( document.createEventObject) {
+                    publicKey.fireEvent('onblur');
+                    privateKey.fireEvent('onblur');
+                    method.fireEvent('onblur');
+                    key.fireEvent('onblur');
+                    bucket.fireEvent('onblur');
+                }
+            }else if(currentTab === 'download'){
+                /*if(!(publicKeyValue.trim() && privateKeyValue.trim() && methodValue.trim() && keyValue.trim() && bucketValue.trim() && expiresValue.trim() && domainValue.trim())){
+                    alert('请填入必填项');
+                    return;
+                }*/
+                if(document.createEvent) {
+                    var evObj = document.createEvent('MouseEvents');
+                    evObj.initEvent( 'blur', true, false);
+                    publicKey.dispatchEvent(evObj);
+                    privateKey.dispatchEvent(evObj);
+                    method.dispatchEvent(evObj);
+                    key.dispatchEvent(evObj);
+                    bucket.dispatchEvent(evObj);
+                    expires.dispatchEvent(evObj);
+                    domain.dispatchEvent(evObj);
+                } else if( document.createEventObject) {
+                    publicKey.fireEvent('onblur');
+                    privateKey.fireEvent('onblur');
+                    method.fireEvent('onblur');
+                    key.fireEvent('onblur');
+                    bucket.fireEvent('onblur');
+                    expires.fireEvent('onblur');
+                    domain.fireEvent('onblur');
+                }
+            }
+            for(var j=0;j<=document.getElementsByClassName('error');j++){}
+            if(hasError.length){
+                return;
+            }
+
+            var resource = '/' + bucketValue.trim() + '/' + keyValue.trim();
+            if(currentTab === 'manage'){
+                var signString = methodValue.trim().toUpperCase() + '\n' + md5Value.trim() + '\n' + mimeTypeValue.trim() + '\n' + dateValue.trim() + '\n';
+            }else if(currentTab === 'download'){
+                var signString = methodValue.trim().toUpperCase() + '\n' + '\n' + '\n' + expiresValue.trim() + '\n';
+            }
+
+            signString = signString + resource;
+            // step1
+            var signArea1 = document.getElementById('step1');
+            signArea1.innerHTML = signString;
+            // step2
+            var signArea2 = document.getElementById('step2');
+            var hmac = CryptoJS.algo.HMAC.create(CryptoJS.algo.SHA1, privateKeyValue);
+            hmac.update(signString);
+            var hash = hmac.finalize();
+            signArea2.innerHTML = CryptoJS.enc.Hex.stringify(hash);
+            // step3
+            var signArea3 = document.getElementById('step3');
+            var b64Sum = CryptoJS.enc.Base64.stringify(hash)
+            signArea3.innerHTML = b64Sum;
+            // step4
+
+            var result = "UCloud " + publicKeyValue.trim() + ":" + b64Sum;
+            signArea4.innerHTML = result;
+
+            var downloadResult = "http://" + domainValue.trim() + "/" + keyValue.trim() + "?UCloudPublicKey=" + publicKeyValue.trim() + '&Expires=' + expiresValue.trim() + '&Signature=' + encodeURIComponent(b64Sum);
+            downloadArea.innerHTML = downloadResult;
+            if(currentTab === 'manage'){
+                signArea4.parentNode.style.display = 'block';
+                downloadArea.parentNode.style.display = 'none';
+            }else if(currentTab === 'download'){
+                downloadArea.parentNode.style.display = 'block';
+                signArea4.parentNode.style.display = 'none';
+            }
+
+
+            var step = document.getElementsByClassName('step');
+            if(showProcess){
+                step[0].style.display = 'block';
+                step[1].style.display = 'block';
+                step[2].style.display = 'block';
+            } else {
+                step[0].style.display = 'none';
+                step[1].style.display = 'none';
+                step[2].style.display = 'none';
+            }
+        }
+
+        signBtn.addEventListener('click', function (){
+            sign();
+        });
+        processBtn.addEventListener('click', function (){
+            var showProcess = true;
+            sign(showProcess);
+        });
+    };
+</script>
+</html>
